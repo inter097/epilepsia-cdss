@@ -5,5 +5,7 @@ __pycache__/
 .env
 .env.local
 target/
+!backend/drools-engine/target/
 *.jar
+!backend/drools-engine/target/drools-engine.jar
 .DS_Store
