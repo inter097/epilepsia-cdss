@@ -5,7 +5,7 @@
     "dockerfilePath": "backend/Dockerfile"
   },
   "deploy": {
-    "startCommand": "gunicorn app.app:app --bind 0.0.0.0:$PORT",
+    "startCommand": "gunicorn --chdir /app/app app:app --bind 0.0.0.0:$PORT",
     "healthcheckPath": "/health"
   }
 }
