@@ -25,4 +25,4 @@ ENV OWL_PATH=/app/clase_temporal.rdf
 
 EXPOSE 5000
 
-CMD gunicorn --chdir /app/app app:app --bind 0.0.0.0:$PORT
+CMD ["/bin/sh", "-c", "gunicorn --chdir /app/app app:app --bind 0.0.0.0:${PORT:-10000}"]
