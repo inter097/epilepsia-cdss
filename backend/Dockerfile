@@ -25,4 +25,4 @@ ENV OWL_PATH=/app/clase_temporal.rdf
 
 EXPOSE 5000
 
-CMD ["gunicorn", "app.app:app", "--bind", "0.0.0.0:5000"]
+CMD gunicorn app.app:app --bind 0.0.0.0:$PORT
