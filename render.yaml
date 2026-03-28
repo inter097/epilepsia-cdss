@@ -4,6 +4,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
+    healthCheckPath: /health
     envVars:
       - key: DROOLS_JAR
         value: /app/drools-engine.jar
