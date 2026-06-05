@@ -18,5 +18,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/cdss
-            git pull origin main
+            git fetch origin main
+            git checkout origin/main -- backend/
+            cp -r backend/app ./app
+            cp backend/Dockerfile ./Dockerfile
             docker compose up -d --build
