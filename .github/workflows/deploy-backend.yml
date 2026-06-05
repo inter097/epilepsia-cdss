@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -22,4 +23,9 @@ jobs:
             git checkout origin/main -- backend/
             cp -r backend/app ./app
             cp backend/Dockerfile ./Dockerfile
+            cat > .env << EOF
+            DROOLS_JAR=${{ secrets.CDSS_DROOLS_JAR }}
+            OWL_PATH=${{ secrets.CDSS_OWL_PATH }}
+            PORT=${{ secrets.CDSS_PORT }}
+            EOF
             docker compose up -d --build
