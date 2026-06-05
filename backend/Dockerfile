@@ -1,28 +1,21 @@
 FROM python:3.11-slim
 
-# Install Java 21
 RUN apt-get update && \
     apt-get install -y --no-install-recommends openjdk-21-jre-headless && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Python dependencies (cached layer before copying the rest)
-COPY backend/app/requirements.txt .
+COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy Flask app
-COPY backend/app/ ./app/
-
-# Copy inference engine jar
-COPY backend/drools-engine/target/drools-engine.jar /app/drools-engine.jar
-
-# Copy ontology
-COPY backend/ontologia/clase_temporal.rdf /app/clase_temporal.rdf
+COPY app/ ./app/
+COPY drools-engine.jar /app/drools-engine.jar
+COPY ontologia/clase_temporal.rdf /app/clase_temporal.rdf
 
 ENV DROOLS_JAR=/app/drools-engine.jar
 ENV OWL_PATH=/app/clase_temporal.rdf
 
 EXPOSE 5000
 
-CMD ["/bin/sh", "-c", "gunicorn --chdir /app/app app:app --bind 0.0.0.0:${PORT:-10000}"]
+CMD ["gunicorn", "--chdir", "/app/app", "-w", "2", "-b", "0.0.0.0:5000", "app:app"]
