@@ -1,0 +1,12 @@
+services:
+  cdss:
+    build: .
+    container_name: cdss
+    env_file: .env
+    networks:
+      - datalab
+    restart: unless-stopped
+
+networks:
+  datalab:
+    external: true
