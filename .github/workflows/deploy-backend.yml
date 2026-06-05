@@ -11,7 +11,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VPS
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Copy backend to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "backend/"
+          target: "/opt/cdss/"
+          strip_components: 1
+
+      - name: Build, restart and verify
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -19,13 +34,11 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/cdss
-            git fetch origin main
-            git checkout origin/main -- backend/
-            cp -r backend/app ./app
-            cp backend/Dockerfile ./Dockerfile
             cat > .env << EOF
             DROOLS_JAR=${{ secrets.CDSS_DROOLS_JAR }}
             OWL_PATH=${{ secrets.CDSS_OWL_PATH }}
             PORT=${{ secrets.CDSS_PORT }}
             EOF
             docker compose up -d --build
+            sleep 5
+            curl -sf http://localhost:5000/health || (echo "Health check failed" && exit 1)
