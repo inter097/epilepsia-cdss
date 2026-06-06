@@ -310,12 +310,12 @@ export default function Home() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6 text-sm text-gray-700">
             <section className="space-y-2">
               <h2 className="text-lg font-bold text-gray-900">¿Qué es este sistema?</h2>
-              <p>
+              <p className="text-justify">
                 El <strong>Sistema de Apoyo a la Decisión Clínica (CDSS)</strong> para epilepsia neonatal
                 es una herramienta de apoyo diagnóstico diseñada para asistir a médicos generales y de
                 primer contacto en la identificación temprana de síndromes epilépticos en recién nacidos.
               </p>
-              <p>
+              <p className="text-justify">
                 El sistema no reemplaza el juicio clínico del médico; su propósito es reducir los
                 tiempos de atención y orientar la derivación oportuna al especialista, mejorando el
                 pronóstico del paciente neonatal.
@@ -324,7 +324,7 @@ export default function Home() {
 
             <section className="space-y-2">
               <h2 className="text-lg font-bold text-gray-900">Base clínica</h2>
-              <p>
+              <p className="text-justify">
                 La clasificación está fundamentada en la{' '}
                 <strong>Clasificación Operacional de Tipos de Crisis de la ILAE 2017</strong> y en la
                 propuesta de clasificación de síndromes epilépticos neonatales de la{' '}
@@ -345,7 +345,7 @@ export default function Home() {
 
             <section className="space-y-2">
               <h2 className="text-lg font-bold text-gray-900">Tecnología</h2>
-              <p>
+              <p className="text-justify">
                 El motor de inferencia está basado en un sistema experto implementado con{' '}
                 <strong>Drools</strong> (motor de reglas en Java) y una ontología OWL que representa
                 el conocimiento clínico. El razonamiento sigue las reglas definidas por especialistas
@@ -355,14 +355,14 @@ export default function Home() {
 
             <section className="space-y-2">
               <h2 className="text-lg font-bold text-gray-900">Contexto académico</h2>
-              <p>
+              <p className="text-justify">
                 Este sistema fue desarrollado como parte de una tesis de{' '}
                 <strong>Maestría en Ciencias e Ingeniería de Datos</strong> de la Universidad
                 Autónoma de Tamaulipas (UAT).
               </p>
             </section>
 
-            <p className="text-xs text-gray-400 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400 pt-4 border-t border-gray-100 text-justify">
               Este sistema es únicamente una herramienta de apoyo. El diagnóstico definitivo debe
               ser realizado por un médico especialista.
             </p>
@@ -379,7 +379,7 @@ export default function Home() {
               {GLOSSARY.map(({ term, def }) => (
                 <div key={term} className="border-b border-gray-100 pb-4 last:border-0">
                   <dt className="font-semibold text-gray-900 text-sm mb-1">{term}</dt>
-                  <dd className="text-sm text-gray-600 leading-relaxed">{def}</dd>
+                  <dd className="text-sm text-gray-600 leading-relaxed text-justify">{def}</dd>
                 </div>
               ))}
             </dl>
