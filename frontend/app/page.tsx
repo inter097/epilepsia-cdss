@@ -90,7 +90,7 @@ const GLOSSARY = [
   { term: 'Regresión del desarrollo', def: 'Pérdida de habilidades previamente adquiridas (motoras, cognitivas o del lenguaje). En neonatos puede observarse como pérdida de reflejos normales o falta de progreso esperado.' },
 ];
 
-type Tab = 'diagnostico' | 'acerca' | 'glosario' | 'op1' | 'op2' | 'op3';
+type Tab = 'wizard' | 'cuestionario' | 'acerca' | 'glosario';
 
 async function inferir(form: FormState): Promise<Result> {
   const res = await fetch(`${API_URL}/inferir`, {
@@ -101,134 +101,53 @@ async function inferir(form: FormState): Promise<Result> {
   return res.json();
 }
 
-function ResultBox({ result }: { result: Result }) {
+function ResultBox({ result, onReset }: { result: Result; onReset: () => void }) {
   const urgenciaClass = result.urgencia && !result.error
-    ? (URGENCIA_STYLE[result.urgencia] ?? 'border-gray-400 bg-gray-50 text-gray-900')
-    : '';
+    ? (URGENCIA_STYLE[result.urgencia] ?? 'border-gray-400 bg-gray-50 text-gray-900') : '';
   const diagLabel = result.diagnostico?.replace(/_Diagnostico$/, '').replace(/_/g, ' ') ?? '';
 
-  if (result.error) return (
-    <div className="p-6 border-2 border-gray-300 bg-gray-50 rounded-2xl text-sm text-gray-700">
-      <p className="font-semibold mb-1">Sin clasificación</p>
-      <p>{result.error}</p>
-    </div>
-  );
-
   return (
-    <div className={`p-6 border-2 rounded-2xl ${urgenciaClass}`}>
-      <h2 className="text-lg font-bold mb-4">Resultado de la inferencia</h2>
-      <dl className="space-y-3 text-sm">
-        <div className="flex gap-2">
-          <dt className="font-semibold w-28 shrink-0">Diagnóstico</dt>
-          <dd className="font-mono">{diagLabel || result.diagnostico}</dd>
+    <div className="space-y-4">
+      {result.error ? (
+        <div className="p-6 border-2 border-gray-300 bg-gray-50 rounded-2xl text-sm text-gray-700">
+          <p className="font-semibold mb-1">Sin clasificación</p>
+          <p>{result.error}</p>
         </div>
-        <div className="flex gap-2">
-          <dt className="font-semibold w-28 shrink-0">Urgencia</dt>
-          <dd>{result.urgencia ? (LABEL[result.urgencia] ?? result.urgencia) : '—'}</dd>
-        </div>
-        <div className="flex gap-2">
-          <dt className="font-semibold w-28 shrink-0">Pronóstico</dt>
-          <dd>{result.pronostico ? (LABEL[result.pronostico] ?? result.pronostico) : '—'}</dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
-
-// ── Opción 1: Sliders + toggles ──────────────────────────────────────────────
-function Opcion1() {
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
-  const [result, setResult] = useState<Result | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const setInt = (key: keyof FormState, v: string) =>
-    setForm(f => ({ ...f, [key]: parseInt(v, 10) || 0 }));
-  const setBool = (key: keyof FormState, v: boolean) =>
-    setForm(f => ({ ...f, [key]: v }));
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true); setError(null); setResult(null);
-    try { setResult(await inferir(form)); }
-    catch { setError('No se pudo conectar con el servidor.'); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <form onSubmit={submit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
-      <fieldset className="space-y-5">
-        <legend className="text-base font-semibold text-gray-800 mb-2">Variables numéricas</legend>
-        {INT_FIELDS.map(({ key, label, max, unit }) => (
-          <div key={key}>
-            <div className="flex justify-between text-sm mb-1">
-              <label className="font-medium text-gray-700">{label}</label>
-              <span className="text-blue-600 font-semibold">{form[key] as number} {unit}</span>
+      ) : (
+        <div className={`p-6 border-2 rounded-2xl ${urgenciaClass}`}>
+          <h2 className="text-lg font-bold mb-4">Resultado de la inferencia</h2>
+          <dl className="space-y-3 text-sm">
+            <div className="flex gap-2">
+              <dt className="font-semibold w-28 shrink-0">Diagnóstico</dt>
+              <dd className="font-mono">{diagLabel || result.diagnostico}</dd>
             </div>
-            <input
-              type="range" min={0} max={max} step={1}
-              value={form[key] as number}
-              onChange={e => setInt(key, e.target.value)}
-              className="w-full accent-blue-600"
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-              <span>0</span><span>{max}</span>
+            <div className="flex gap-2">
+              <dt className="font-semibold w-28 shrink-0">Urgencia</dt>
+              <dd>{result.urgencia ? (LABEL[result.urgencia] ?? result.urgencia) : '—'}</dd>
             </div>
-          </div>
-        ))}
-      </fieldset>
-
-      <fieldset>
-        <legend className="text-base font-semibold text-gray-800 mb-4">Lateralización</legend>
-        <div className="flex gap-2">
-          {['unilateral', 'bilateral', 'migratoria'].map(v => (
-            <button key={v} type="button"
-              onClick={() => setForm(f => ({ ...f, lateralizacionCrisis: v }))}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                form.lateralizacionCrisis === v
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
-              }`}>
-              {v.charAt(0).toUpperCase() + v.slice(1)}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend className="text-base font-semibold text-gray-800 mb-4">Variables cualitativas</legend>
-        <div className="space-y-3">
-          {BOOL_FIELDS.map(({ key, label }) => (
-            <div key={key} className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">{label}</span>
-              <button type="button" onClick={() => setBool(key, !(form[key] as boolean))}
-                className={`relative w-11 h-6 rounded-full transition-colors ${form[key] ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form[key] ? 'translate-x-5' : ''}`} />
-              </button>
+            <div className="flex gap-2">
+              <dt className="font-semibold w-28 shrink-0">Pronóstico</dt>
+              <dd>{result.pronostico ? (LABEL[result.pronostico] ?? result.pronostico) : '—'}</dd>
             </div>
-          ))}
+          </dl>
         </div>
-      </fieldset>
-
-      <button type="submit" disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors">
-        {loading ? 'Analizando…' : 'Inferir diagnóstico'}
+      )}
+      <button onClick={onReset}
+        className="w-full border border-gray-300 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50">
+        Nueva consulta
       </button>
-
-      {error && <div className="p-4 bg-red-50 border border-red-300 rounded-xl text-sm text-red-700">{error}</div>}
-      {result && <ResultBox result={result} />}
-    </form>
+    </div>
   );
 }
 
-// ── Opción 2: Wizard por pasos ───────────────────────────────────────────────
+// ── Wizard por pasos ─────────────────────────────────────────────────────────
 const WIZARD_STEPS = [
-  { title: 'Datos del paciente', fields: ['edadInicioEnDias', 'duracionCrisisSegundos', 'frecuenciaCrisisPorDia', 'puntuacionAPGAR', 'lateralizacionCrisis'] },
-  { title: 'Tipo de crisis', fields: ['tieneCrisisClonicas', 'tieneCrisisTonicas', 'tieneEspasmos', 'tieneHipotonia', 'tieneMioclonias'] },
-  { title: 'Antecedentes clínicos', fields: ['asociadoFiebre', 'complicacionPerinatal', 'regresionDesarrollo', 'tieneAntecedenteFamiliar'] },
+  { title: 'Datos del paciente' },
+  { title: 'Tipo de crisis' },
+  { title: 'Antecedentes clínicos' },
 ];
 
-function Opcion2() {
+function WizardTab() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [step, setStep] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
@@ -247,7 +166,9 @@ function Opcion2() {
     finally { setLoading(false); }
   };
 
-  const numericField = (key: keyof FormState) => {
+  const reset = () => { setForm(DEFAULT_FORM); setStep(0); setResult(null); setError(null); };
+
+  const sliderField = (key: keyof FormState) => {
     const f = INT_FIELDS.find(x => x.key === key)!;
     return (
       <div key={key}>
@@ -263,7 +184,7 @@ function Opcion2() {
     );
   };
 
-  const boolField = (key: keyof FormState) => {
+  const toggleField = (key: keyof FormState) => {
     const f = BOOL_FIELDS.find(x => x.key === key)!;
     return (
       <div key={key} className="flex items-center justify-between">
@@ -276,19 +197,10 @@ function Opcion2() {
     );
   };
 
-  if (result) return (
-    <div className="space-y-4">
-      <ResultBox result={result} />
-      <button onClick={() => { setResult(null); setStep(0); setForm(DEFAULT_FORM); }}
-        className="w-full border border-gray-300 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50">
-        Nueva consulta
-      </button>
-    </div>
-  );
+  if (result) return <ResultBox result={result} onReset={reset} />;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6">
-      {/* Progress */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-gray-400">
           <span>Paso {step + 1} de {WIZARD_STEPS.length}</span>
@@ -305,10 +217,10 @@ function Opcion2() {
       <div className="space-y-5">
         {step === 0 && (
           <>
-            {numericField('edadInicioEnDias')}
-            {numericField('duracionCrisisSegundos')}
-            {numericField('frecuenciaCrisisPorDia')}
-            {numericField('puntuacionAPGAR')}
+            {sliderField('edadInicioEnDias')}
+            {sliderField('duracionCrisisSegundos')}
+            {sliderField('frecuenciaCrisisPorDia')}
+            {sliderField('puntuacionAPGAR')}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Lateralización</label>
               <div className="flex gap-2">
@@ -327,8 +239,8 @@ function Opcion2() {
             </div>
           </>
         )}
-        {step === 1 && WIZARD_STEPS[1].fields.map(k => boolField(k as keyof FormState))}
-        {step === 2 && WIZARD_STEPS[2].fields.map(k => boolField(k as keyof FormState))}
+        {step === 1 && ['tieneCrisisClonicas', 'tieneCrisisTonicas', 'tieneEspasmos', 'tieneHipotonia', 'tieneMioclonias'].map(k => toggleField(k as keyof FormState))}
+        {step === 2 && ['asociadoFiebre', 'complicacionPerinatal', 'regresionDesarrollo', 'tieneAntecedenteFamiliar'].map(k => toggleField(k as keyof FormState))}
       </div>
 
       <div className="flex gap-3 pt-2">
@@ -355,7 +267,7 @@ function Opcion2() {
   );
 }
 
-// ── Opción 3: Cuestionario Sí/No ─────────────────────────────────────────────
+// ── Cuestionario Sí/No ───────────────────────────────────────────────────────
 const QUESTIONS: { key: keyof FormState; question: string }[] = [
   { key: 'tieneCrisisTonicas',       question: '¿El paciente presenta crisis tónicas (rigidez muscular)?' },
   { key: 'tieneCrisisClonicas',      question: '¿Presenta movimientos clónicos (sacudidas rítmicas)?' },
@@ -368,9 +280,9 @@ const QUESTIONS: { key: keyof FormState; question: string }[] = [
   { key: 'tieneAntecedenteFamiliar', question: '¿Existe antecedente familiar de epilepsia neonatal?' },
 ];
 
-function Opcion3() {
+function CuestionarioTab() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
-  const [qIdx, setQIdx] = useState(-1); // -1 = datos numéricos
+  const [qIdx, setQIdx] = useState(-1);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -379,9 +291,13 @@ function Opcion3() {
     setForm(f => ({ ...f, [key]: parseInt(v, 10) || 0 }));
 
   const answer = (val: boolean) => {
-    setForm(f => ({ ...f, [QUESTIONS[qIdx].key]: val }));
-    if (qIdx < QUESTIONS.length - 1) setQIdx(i => i + 1);
-    else submit({ ...form, [QUESTIONS[qIdx].key]: val });
+    const updated = { ...form, [QUESTIONS[qIdx].key]: val };
+    setForm(updated);
+    if (qIdx < QUESTIONS.length - 1) {
+      setQIdx(i => i + 1);
+    } else {
+      submit(updated);
+    }
   };
 
   const submit = async (finalForm: FormState) => {
@@ -393,24 +309,15 @@ function Opcion3() {
 
   const reset = () => { setForm(DEFAULT_FORM); setQIdx(-1); setResult(null); setError(null); };
 
-  const total = QUESTIONS.length;
-  const progress = qIdx === -1 ? 0 : ((qIdx + 1) / (total + 1)) * 100;
+  const progress = qIdx === -1 ? 0 : ((qIdx + 1) / QUESTIONS.length) * 100;
 
-  if (result) return (
-    <div className="space-y-4">
-      <ResultBox result={result} />
-      <button onClick={reset} className="w-full border border-gray-300 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50">
-        Nueva consulta
-      </button>
-    </div>
-  );
+  if (result) return <ResultBox result={result} onReset={reset} />;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6">
-      {/* Progress */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-gray-400">
-          <span>{qIdx === -1 ? 'Datos iniciales' : `Pregunta ${qIdx + 1} de ${total}`}</span>
+          <span>{qIdx === -1 ? 'Datos iniciales' : `Pregunta ${qIdx + 1} de ${QUESTIONS.length}`}</span>
           <span>{Math.round(progress)}%</span>
         </div>
         <div className="h-1.5 bg-gray-100 rounded-full">
@@ -418,7 +325,6 @@ function Opcion3() {
         </div>
       </div>
 
-      {/* Paso 0: datos numéricos + lateralización */}
       {qIdx === -1 && (
         <div className="space-y-5">
           <h2 className="text-base font-semibold text-gray-800">Datos del paciente</h2>
@@ -457,7 +363,6 @@ function Opcion3() {
         </div>
       )}
 
-      {/* Preguntas Sí/No */}
       {qIdx >= 0 && !loading && (
         <div className="space-y-8">
           <p className="text-lg font-medium text-gray-800 leading-snug text-center">
@@ -489,38 +394,17 @@ function Opcion3() {
 }
 
 // ── Página principal ──────────────────────────────────────────────────────────
+type TabDef = { id: Tab; label: string };
+
+const TABS: TabDef[] = [
+  { id: 'wizard',       label: 'Por pasos' },
+  { id: 'cuestionario', label: 'Cuestionario' },
+  { id: 'acerca',       label: 'Acerca del sistema' },
+  { id: 'glosario',     label: 'Glosario clínico' },
+];
+
 export default function Home() {
-  const [tab, setTab] = useState<Tab>('diagnostico');
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
-  const [result, setResult] = useState<Result | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-
-  const setInt = (key: keyof FormState, raw: string) =>
-    setForm(f => ({ ...f, [key]: raw === '' ? 0 : parseInt(raw, 10) }));
-  const setBool = (key: keyof FormState, checked: boolean) =>
-    setForm(f => ({ ...f, [key]: checked }));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true); setFetchError(null); setResult(null);
-    try { setResult(await inferir(form)); }
-    catch { setFetchError('No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.'); }
-    finally { setLoading(false); }
-  };
-
-  const urgenciaClass = result?.urgencia && !result.error
-    ? (URGENCIA_STYLE[result.urgencia] ?? 'border-gray-400 bg-gray-50 text-gray-900') : '';
-  const diagLabel = result?.diagnostico?.replace(/_Diagnostico$/, '').replace(/_/g, ' ') ?? '';
-
-  const TABS: { id: Tab; label: string }[] = [
-    { id: 'diagnostico', label: 'Diagnóstico' },
-    { id: 'acerca',      label: 'Acerca del sistema' },
-    { id: 'glosario',    label: 'Glosario clínico' },
-    { id: 'op1',         label: 'Opción 1' },
-    { id: 'op2',         label: 'Opción 2' },
-    { id: 'op3',         label: 'Opción 3' },
-  ];
+  const [tab, setTab] = useState<Tab>('wizard');
 
   const tabClass = (t: Tab) =>
     `px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
@@ -544,71 +428,9 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Tab: Diagnóstico */}
-        {tab === 'diagnostico' && (
-          <>
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
-              <fieldset>
-                <legend className="text-base font-semibold text-gray-800 mb-4">Variables cuantitativas</legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {INT_FIELDS.map(({ key, label }) => (
-                    <div key={key}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                      <input type="number" min={0} value={form[key] as number}
-                        onChange={e => setInt(key, e.target.value)} required
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset>
-                <legend className="text-base font-semibold text-gray-800 mb-4">Lateralización de crisis</legend>
-                <select value={form.lateralizacionCrisis}
-                  onChange={e => setForm(f => ({ ...f, lateralizacionCrisis: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="unilateral">Unilateral</option>
-                  <option value="bilateral">Bilateral</option>
-                  <option value="migratoria">Migratoria</option>
-                </select>
-              </fieldset>
-              <fieldset>
-                <legend className="text-base font-semibold text-gray-800 mb-4">Variables cualitativas</legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {BOOL_FIELDS.map(({ key, label }) => (
-                    <label key={key} className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" checked={form[key] as boolean}
-                        onChange={e => setBool(key, e.target.checked)}
-                        className="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500" />
-                      <span className="text-sm text-gray-700">{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <button type="submit" disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors">
-                {loading ? 'Analizando…' : 'Inferir diagnóstico'}
-              </button>
-            </form>
-            {fetchError && <div className="p-4 bg-red-50 border border-red-300 rounded-xl text-sm text-red-700">{fetchError}</div>}
-            {result && !result.error && (
-              <div className={`p-6 border-2 rounded-2xl ${urgenciaClass}`}>
-                <h2 className="text-lg font-bold mb-4">Resultado de la inferencia</h2>
-                <dl className="space-y-3 text-sm">
-                  <div className="flex gap-2"><dt className="font-semibold w-28 shrink-0">Diagnóstico</dt><dd className="font-mono">{diagLabel || result.diagnostico}</dd></div>
-                  <div className="flex gap-2"><dt className="font-semibold w-28 shrink-0">Urgencia</dt><dd>{result.urgencia ? (LABEL[result.urgencia] ?? result.urgencia) : '—'}</dd></div>
-                  <div className="flex gap-2"><dt className="font-semibold w-28 shrink-0">Pronóstico</dt><dd>{result.pronostico ? (LABEL[result.pronostico] ?? result.pronostico) : '—'}</dd></div>
-                </dl>
-              </div>
-            )}
-            {result?.error && (
-              <div className="p-6 border-2 border-gray-300 bg-gray-50 rounded-2xl text-sm text-gray-700">
-                <p className="font-semibold mb-1">Sin clasificación</p><p>{result.error}</p>
-              </div>
-            )}
-          </>
-        )}
+        {tab === 'wizard'       && <WizardTab />}
+        {tab === 'cuestionario' && <CuestionarioTab />}
 
-        {/* Tab: Acerca del sistema */}
         {tab === 'acerca' && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6 text-sm text-gray-700">
             <section className="space-y-2">
@@ -640,7 +462,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Tab: Glosario */}
         {tab === 'glosario' && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-4">
             <p className="text-sm text-gray-500">Terminología clínica básica utilizada en el contexto de epilepsia neonatal.</p>
@@ -654,10 +475,6 @@ export default function Home() {
             </dl>
           </div>
         )}
-
-        {tab === 'op1' && <Opcion1 />}
-        {tab === 'op2' && <Opcion2 />}
-        {tab === 'op3' && <Opcion3 />}
 
       </div>
     </main>
