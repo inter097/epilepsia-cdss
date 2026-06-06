@@ -33,6 +33,6 @@ jobs:
           script: |
             cd /opt/cdss-frontend
             echo "NEXT_PUBLIC_API_URL=${{ secrets.CDSS_API_URL }}" > .env
-            docker compose up -d --build
+            docker compose up -d --build --force-recreate
             sleep 10
             curl -sf http://localhost:3006 || (echo "Health check failed" && exit 1)
