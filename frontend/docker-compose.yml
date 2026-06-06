@@ -8,3 +8,15 @@ services:
     restart: unless-stopped
     ports:
       - "3006:3000"
+    networks:
+      - datalab
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cdss-frontend.rule=Host(`cdss.eliuth.dev`)"
+      - "traefik.http.routers.cdss-frontend.entrypoints=websecure"
+      - "traefik.http.routers.cdss-frontend.tls.certresolver=cloudflare"
+      - "traefik.http.services.cdss-frontend.loadbalancer.server.port=3000"
+
+networks:
+  datalab:
+    external: true
